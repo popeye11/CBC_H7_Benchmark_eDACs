@@ -49,7 +49,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define CTRLFREQUENCY 1e3
+#define CTRLFREQUENCY 1e4
 #define DAC_ALIGNMENT DAC_ALIGN_12B_R
 #define hdac hdac1
 #define TIM2PSC 0
@@ -58,10 +58,11 @@ uint32_t dacvalue=0;
 double volt_value=0;
 uint32_t Tim2ARR;
 uint32_t ADCBuf[2];
-uint16_t  pData[2]={0xf0,0x30};
+uint16_t  pData; //{0x7530};  //3952
 uint32_t   acValBuffer;
 uint16_t DACoutput1;
 uint16_t DACoutput2;
+uint16_t li;
 double paramFreq;
 double   PT_Anf=0;
 double   PT_End =0;
@@ -71,7 +72,10 @@ tPID* 		 pPID2       =   &InstancePID2;
 uint8_t PIDInputOption = 1;
 double LockInOutput = 0.0;
 double yout;
-
+uint16_t charI[16];
+uint16_t hexString;
+uint16_t pdata;
+uint16_t li;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,12 +99,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGNMENT, (uint32_t)DACoutput1);
 		//HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGNMENT, (uint32_t)DACoutput1);
 		//HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
+
+		//pData = (uint16_t)ADCBuf[0];
+		pData =(uint16_t)0xFFF0;
+		//itoa(pData, hexString, 16);
+/*		__IO uint16_t *ptxdr_16bits = (uint16_t*)&SPI1->TXDR; // for 16-bit-write
+		SPI1->CR1 |= SPI_CR1_SPE_Msk;    // enable SPI
+		SPI1->CR1 |= SPI_CR1_CSTART_Msk; // master transfer start
+		while (1)
+		  {
+		         GPIOB->BSRR = GPIO_PIN_4 << 16; // Reset
+		         *ptxdr_16bits = pData++;
+		         while( !(SPI1->SR & SPI_SR_TXC_Msk));  // check if FiFo transmission complete
+		         GPIOB->BSRR = GPIO_PIN_4; // Set
+		  }*/
+
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
-		HAL_SPI_Transmit(&hspi1, (uint8_t *)pData, 2, 10);
+		HAL_SPI_Transmit(&hspi1, (uint8_t *)pData, 1, 1);
+		//HAL_SPI_Transmit1(pData);
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
 		PT_End =DWT->CYCCNT;
 		duration = PT_End-PT_Anf;
-        //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, GPIO_PIN_RESET);
 }
 /* USER CODE END 0 */
 
@@ -244,12 +264,12 @@ void PeriphCommonClock_Config(void)
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_SPI1
                               |RCC_PERIPHCLK_TIM;
-  PeriphClkInitStruct.PLL3.PLL3M = 2;
-  PeriphClkInitStruct.PLL3.PLL3N = 54;
-  PeriphClkInitStruct.PLL3.PLL3P = 2;
+  PeriphClkInitStruct.PLL3.PLL3M = 1;
+  PeriphClkInitStruct.PLL3.PLL3N = 25;
+  PeriphClkInitStruct.PLL3.PLL3P = 1;
   PeriphClkInitStruct.PLL3.PLL3Q = 2;
-  PeriphClkInitStruct.PLL3.PLL3R = 6;
-  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;
+  PeriphClkInitStruct.PLL3.PLL3R = 3;
+  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_3;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
   PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL3;

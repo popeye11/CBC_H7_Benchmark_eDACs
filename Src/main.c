@@ -26,7 +26,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include <stdlib.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -49,7 +49,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define CTRLFREQUENCY 1e4
 #define DAC_ALIGNMENT DAC_ALIGN_12B_R
 #define hdac hdac1
 #define TIM2PSC 0
@@ -76,6 +75,9 @@ uint16_t charI[16];
 uint16_t hexString;
 uint16_t pdata;
 uint16_t li;
+uint16_t spi_data = 0x0;
+__IO uint16_t *ptxdr_16bits = (uint16_t*)&SPI1->TXDR; // for 16-bit-write
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,27 +101,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGNMENT, (uint32_t)DACoutput1);
 		//HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGNMENT, (uint32_t)DACoutput1);
 		//HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
-/*
-		if (li <= 1000)
-		{
-			li +=1;
-			pData =0xFFFF;
-		}
-		else if (li>1000 && li<2000)
-		{
-			li+=1;
-			pData =0x0000;
-		}
-		else if (li>=2000)
-		{
-			li=0;
-			pData = 0xFFFF;
 
-		}*/
 		//pData = (uint16_t)ADCBuf[0];
-		pData =(uint16_t)0xFFFF;
+
 		//itoa(pData, hexString, 16);
-		__IO uint16_t *ptxdr_16bits = (uint16_t*)&SPI1->TXDR; // for 16-bit-write
+/*		__IO uint16_t *ptxdr_16bits = (uint16_t*)&SPI1->TXDR; // for 16-bit-write
 		SPI1->CR1 |= SPI_CR1_SPE_Msk;    // enable SPI
 		SPI1->CR1 |= SPI_CR1_CSTART_Msk; // master transfer start
 		while (1)
@@ -128,16 +114,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		         *ptxdr_16bits = pData++;
 		         while( !(SPI1->SR & SPI_SR_TXC_Msk));  // check if FiFo transmission complete
 		         GPIOB->BSRR = GPIO_PIN_4; // Set
-		  }
+		  }*/
 
-	//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
-	//	charI = &hspi1->TXDR;
-	//	HAL_SPI_Transmit(&hspi1, (uint8_t *)hexString, 1, 1);
-	//	HAL_SPI_Transmit1(pData);
-	//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+		//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+		//HAL_SPI_Transmit(&hspi1, (uint8_t *)pData, 1, 1);
+		//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+		if (li<2)
+		{
+			li +=1;
+			spi_data=0xAAAA;
+		}
+		else if (li>=2 && li<3)
+		{
+			li +=1;
+			spi_data =0x000F;
+		}
+		else
+		{
+			li =0;
+		}
+		SPI1_transmit(spi_data);
 		PT_End =DWT->CYCCNT;
 		duration = PT_End-PT_Anf;
-        //HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, GPIO_PIN_RESET);
 }
 /* USER CODE END 0 */
 
@@ -190,10 +189,11 @@ int main(void)
   PID_vInit(pPID1);
   /* USER CODE BEGIN 1 */
 	 // HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start_IT(&htim2);
   //HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	      /* Start DAC */
-  HAL_ADC_Start_DMA(&hadc1,ADCBuf,2);
+  //HAL_ADC_Start_DMA(&hadc1,ADCBuf,2);
+  SPI1_start();
+  HAL_TIM_Base_Start_IT(&htim2);
   //HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
   //HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
   //HAL_UART_Receive_DMA(&huart3,aRxBuffer,RXBUFFERSIZE);
@@ -205,6 +205,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -280,12 +281,12 @@ void PeriphCommonClock_Config(void)
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_SPI1
                               |RCC_PERIPHCLK_TIM;
-  PeriphClkInitStruct.PLL3.PLL3M = 2;
-  PeriphClkInitStruct.PLL3.PLL3N = 54;
-  PeriphClkInitStruct.PLL3.PLL3P = 2;
+  PeriphClkInitStruct.PLL3.PLL3M = 1;
+  PeriphClkInitStruct.PLL3.PLL3N = 25;
+  PeriphClkInitStruct.PLL3.PLL3P = 1;
   PeriphClkInitStruct.PLL3.PLL3Q = 2;
-  PeriphClkInitStruct.PLL3.PLL3R = 6;
-  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;
+  PeriphClkInitStruct.PLL3.PLL3R = 3;
+  PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_3;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
   PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL3;
@@ -436,6 +437,21 @@ void PID_Calc(tPID* pPID,uint8_t PIDInputOption, double ADCvalue,double LockIn)
 	pPID->error_1lag = pPID->error;
 //   tty3 =Kd/pPID->_Ts;
 	pPID->outvalue= outputsat;
+}
+void SPI1_start()
+{
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+	  SPI1->CR1 |= SPI_CR1_SPE_Msk;    // enable SPI
+	  SPI1->CR1 |= SPI_CR1_CSTART_Msk; // master transfer start
+
+}
+void SPI1_transmit(uint16_t data)
+{
+    GPIOB->BSRR = GPIO_PIN_4 << 16; // Reset
+    *ptxdr_16bits = data;
+    while( !(SPI1->SR & SPI_SR_TXC_Msk));  // check if FiFo transmission complete
+    GPIOB->BSRR = GPIO_PIN_4; // Set
+
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

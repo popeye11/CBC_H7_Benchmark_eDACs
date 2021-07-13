@@ -795,7 +795,7 @@ HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint
   HAL_StatusTypeDef errorcode = HAL_OK;
 
   /* Check Direction parameter */
- // assert_param(IS_SPI_DIRECTION_2LINES_OR_1LINE_2LINES_TXONLY(hspi->Init.Direction));
+  assert_param(IS_SPI_DIRECTION_2LINES_OR_1LINE_2LINES_TXONLY(hspi->Init.Direction));
 
   /* Process Locked */
   __HAL_LOCK(hspi);
@@ -849,13 +849,13 @@ HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint
     SET_BIT(hspi->Instance->CR1, SPI_CR1_CSTART);
   }
 
- /*  Transmit data in 32 Bit mode
+  /* Transmit data in 32 Bit mode */
   if (hspi->Init.DataSize > SPI_DATASIZE_16BIT)
   {
-     Transmit data in 32 Bit mode
+    /* Transmit data in 32 Bit mode */
     while (hspi->TxXferCount > 0UL)
     {
-       Wait until TXP flag is set to send data
+      /* Wait until TXP flag is set to send data */
       if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXP))
       {
         *((__IO uint32_t *)&hspi->Instance->TXDR) = *((uint32_t *)hspi->pTxBuffPtr);
@@ -864,13 +864,13 @@ HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint
       }
       else
       {
-         Timeout management
+        /* Timeout management */
         if ((((HAL_GetTick() - tickstart) >=  Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U))
         {
-           Call standard close procedure with error check
+          /* Call standard close procedure with error check */
           SPI_CloseTransfer(hspi);
 
-           Process Unlocked
+          /* Process Unlocked */
           __HAL_UNLOCK(hspi);
 
           SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_TIMEOUT);
@@ -879,10 +879,9 @@ HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint
         }
       }
     }
-  }*/
+  }
   /* Transmit data in 16 Bit mode */
-//  else
-if (hspi->Init.DataSize > SPI_DATASIZE_8BIT)
+  else if (hspi->Init.DataSize > SPI_DATASIZE_8BIT)
   {
     /* Transmit data in 16 Bit mode */
     while (hspi->TxXferCount > 0UL)
@@ -926,12 +925,11 @@ if (hspi->Init.DataSize > SPI_DATASIZE_8BIT)
     }
   }
   /* Transmit data in 8 Bit mode */
-/*
   else
   {
     while (hspi->TxXferCount > 0UL)
     {
-       Wait until TXP flag is set to send data
+      /* Wait until TXP flag is set to send data */
       if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXP))
       {
         if ((hspi->TxXferCount > 3UL) && (hspi->Init.FifoThreshold > SPI_FIFO_THRESHOLD_03DATA))
@@ -946,7 +944,7 @@ if (hspi->Init.DataSize > SPI_DATASIZE_8BIT)
           *ptxdr_16bits = *((uint16_t *)hspi->pTxBuffPtr);
 #else
           *((__IO uint16_t *)&hspi->Instance->TXDR) = *((uint16_t *)hspi->pTxBuffPtr);
-#endif  __GNUC__
+#endif /* __GNUC__ */
           hspi->pTxBuffPtr += sizeof(uint16_t);
           hspi->TxXferCount -= (uint16_t)2UL;
         }
@@ -959,13 +957,13 @@ if (hspi->Init.DataSize > SPI_DATASIZE_8BIT)
       }
       else
       {
-         Timeout management
+        /* Timeout management */
         if ((((HAL_GetTick() - tickstart) >=  Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U))
         {
-           Call standard close procedure with error check
+          /* Call standard close procedure with error check */
           SPI_CloseTransfer(hspi);
 
-           Process Unlocked
+          /* Process Unlocked */
           __HAL_UNLOCK(hspi);
 
           SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_TIMEOUT);
@@ -975,7 +973,6 @@ if (hspi->Init.DataSize > SPI_DATASIZE_8BIT)
       }
     }
   }
-*/
 
   /* Wait for Tx (and CRC) data to be sent */
   if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, tickstart, Timeout) != HAL_OK)
@@ -3918,28 +3915,7 @@ static uint32_t SPI_GetPacketSize(SPI_HandleTypeDef *hspi)
   */
 
 #endif /* HAL_SPI_MODULE_ENABLED */
-HAL_StatusTypeDef HAL_SPI_Transmit1(uint16_t data)
-{
-	  __IO uint16_t *ptxdr_16bits = (uint16_t*)&SPI1->TXDR; // for 16-bit-write
 
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-	  SPI1->CR1 |= SPI_CR1_SPE_Msk;    // enable SPI
-	  SPI1->CR1 |= SPI_CR1_CSTART_Msk; // master transfer start
-	  while (1)
-	  {
-	     //    GPIOB->BSRR = GPIO_PIN_4 << 16; // Reset
-	         *ptxdr_16bits = data++;
-	         while( !(SPI1->SR & SPI_SR_TXC_Msk));  // check if FiFo transmission complete
-	     //    GPIOB->BSRR = GPIO_PIN_4; // Set
-
-	    /* USER CODE END WHILE */
-
-	    /* USER CODE BEGIN 3 */
-	  }
-	  /* USER CODE END 3 */
-
-
-}
 /**
   * @}
   */

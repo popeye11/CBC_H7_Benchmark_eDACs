@@ -32,7 +32,7 @@ extern "C" {
 #define DAC_ALIGNMENT DAC_ALIGN_12B_R
 #define hdac hdac1
 #define TIM2PSC 0
-#define CTRLFREQUENCY 1.0e4
+#define CTRLFREQUENCY 100e3
 //#define ADC2DACFREQ  5
 #define TXBUFFERSIZE 40
 #define RXBUFFERSIZE 1
@@ -100,6 +100,8 @@ tPID InstancePID2;
 void PID_vInit(tPID*);
 void PID_Calc(tPID*,uint8_t, double, double);
 char decToHexa(int);
+void SPI1_transmit(uint16_t );
+void SPI1_start();
 float tty1,tty2,tty3,tty4;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -121,7 +123,7 @@ float tty1,tty2,tty3,tty4;
 #define DAC_ALIGNMENT DAC_ALIGN_12B_R
 #define hdac hdac1
 #define TIM2PSC 0
-#define CTRLFREQUENCY 2.0e5
+#define CTRLFREQUENCY 1.0e4
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
